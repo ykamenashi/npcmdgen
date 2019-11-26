@@ -1,0 +1,28 @@
+#!/bin/bash
+
+CONFIG_FILE=~/.npcmd_default
+
+echoexit(){
+  echo $1
+  exit 0
+}
+
+if [ ! -f $CONFIG_FILE ] ; then
+  echoexit "config file: $CONFIG_FILE : not found. please creaet it. quit."
+fi
+
+source $CONFIG_FILE
+
+#### view
+for P in $PRESET_PROJECTS
+do
+  echo "[Project: $P]"
+  gcloud container clusters list --account $GCLOUD_ACCOUNT \
+  --project $P \
+  --zone $LOCATION \
+  --format='table[box](name,num_nodes,location)'
+  echo ''
+done
+
+### make change(TODO)
+# ...

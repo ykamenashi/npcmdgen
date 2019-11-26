@@ -1,0 +1,17 @@
+#!/bin/false
+
+#### Google Account for target GCP Project
+GCLOUD_ACCOUNT=your@example.com
+
+#### Write target Project-IDs separeted by space
+PRESET_PROJECTS="pj1 pj2 pj3 pj4"
+
+#### minimum number of your node-pool (default: 0)
+MINIMIZED_NODES_NUM=0
+
+#### standard number of your node-pool (default: 3)
+RESTORED_NODES_NUM=3
+
+#### region / zone
+USE_REGION=false
+LOCATION=asia-northeast1-c
