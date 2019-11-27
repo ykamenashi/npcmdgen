@@ -2,27 +2,98 @@
 
 CONFIG_FILE=~/.npcmd_default
 
-echoexit(){
-  echo $1
-  exit 0
+ACTIONS="[s]rink [e]xpand [n]oop"
+
+COLOR_RESET='\e[0m'
+COLOR_BOLD='\e[1m'
+COLOR_WHITE_ON_RED='\e[37;41m'
+
+#### func defs #### ==============================
+
+echoexit(){ echo $1 ; exit 0
 }
 
+prompt_continue(){ echo 'is OK to continue? (type ^C to quit)'; echo -n '> '
+  read -r ANS
+}
+
+change_cluster_size(){
+  ORDERED_NUM_NODES=$1
+  echo "Target Cluster Name is?" ; echo -n '> '
+  read -r TGT_CLUSTER_NAME
+  COMMAND_STR="gcloud container clusters resize --num-nodes ${ORDERED_NUM_NODES}"
+  COMMAND_STR="${COMMAND_STR} ${LOCATION_OPT_STR} ${LOCATION}"
+  COMMAND_STR="${COMMAND_STR} $TGT_CLUSTER_NAME"
+  echo ''
+  echo 'preparing commnad:'
+  printf "  ${COLOR_BOLD}${COLOR_WHITE_ON_RED} ${COMMAND_STR} ${COLOR_RESET}"
+  echo ''
+  prompt_continue
+  echo ''
+  $COMMAND_STR
+}
+
+make_shlink(){
+  change_cluster_size ${MINIMIZED_NODES_NUM}
+}
+
+make_expand(){
+  change_cluster_size ${RESTORED_NODES_NUM}
+}
+
+
+
+#### load config file ####
 if [ ! -f $CONFIG_FILE ] ; then
   echoexit "config file: $CONFIG_FILE : not found. please creaet it. quit."
 fi
 
 source $CONFIG_FILE
 
-#### view
+#### define clusetr location ####
+LOCATION_OPT_STR="--zone"
+if [ "$USE_REGION" == "true" ] ; then
+  LOCATION_OPT_STR="--region"
+fi
+
+#### default action: view clusters ####
 for P in $PRESET_PROJECTS
 do
   echo "[Project: $P]"
   gcloud container clusters list --account $GCLOUD_ACCOUNT \
   --project $P \
   --zone $LOCATION \
-  --format='table[box](name,num_nodes,location)'
+  --format='table[box](name,currentNodeCount,location)'
   echo ''
 done
 
-### make change(TODO)
-# ...
+#### get action choice from you #### ==============================
+
+cat << EOM
+%-*-*-%-*-*-%-*-*-%-*-*-%-*-*-%-*-*-%-*-*-%-*-*-%-*-*-%-*-*-%
+
+  What is your Action? (input the fist char of your choice)
+
+  $(echo $ACTIONS)
+
+%-*-*-%-*-*-%-*-*-%-*-*-%-*-*-%-*-*-%-*-*-%-*-*-%-*-*-%-*-*-%
+
+EOM
+
+echo -n '> '
+read -r ACT
+
+case $ACT in
+  "s"|"shrink")
+    make_shlink
+    ;;
+  "e"|"expand")
+    make_expand
+    ;;
+  *)
+    :
+    ;;
+esac
+
+exit 0
+#### EOS ####
